@@ -469,6 +469,50 @@ def admin_backups_restore(filename):
     return render_template('admin_restore_result.html', backup_file=filename, pre_backup=os.path.basename(pre_backup) if pre_backup else None, restored=restored, error=(error if not restored else None))
 
 
+@app.route('/admin/undo_restore', methods=['POST', 'GET'])
+def admin_undo_restore():
+    """Restore the most recent backup file (admin-only). This will first create a pre-undo backup of current workbook.
+    If no backup files exist, do nothing.
+    """
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    if not is_admin():
+        return "Forbidden", 403
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    backups = [f for f in os.listdir(DATA_DIR) if f.startswith('hostels_backup_') and f.lower().endswith('.xlsx')]
+    if not backups:
+        return render_template('admin_undo_result.html', found=False)
+
+    # choose most recent by modification time
+    backups_full = [(f, os.path.getmtime(os.path.join(DATA_DIR, f))) for f in backups]
+    backups_full.sort(key=lambda x: x[1], reverse=True)
+    latest_name = backups_full[0][0]
+    latest_path = os.path.join(DATA_DIR, latest_name)
+
+    if request.method == 'GET':
+        # show confirmation page with latest backup info
+        try:
+            size = os.path.getsize(latest_path)
+            mtime = datetime.utcfromtimestamp(os.path.getmtime(latest_path)).isoformat() + 'Z'
+        except Exception:
+            size = None
+            mtime = None
+        return render_template('admin_undo_confirm.html', backup_file=latest_name, size=size, mtime=mtime)
+
+    # POST -> perform undo (restore latest)
+    pre_backup = backup_workbook_file()
+    try:
+        shutil.copy2(latest_path, DATA_FILE)
+        restored = True
+        error = None
+    except Exception as e:
+        restored = False
+        error = str(e)
+
+    return render_template('admin_undo_result.html', found=True, backup_file=latest_name, pre_backup=os.path.basename(pre_backup) if pre_backup else None, restored=restored, error=error)
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

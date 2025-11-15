@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Undo Restore{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+  <div class="card p-4">
+    <h4>Undo Last Restore — Confirm</h4>
+    <p class="small text-muted">This will restore the workbook from the most recent backup: <strong>{{ backup_file }}</strong></p>
+    <p class="small text-muted">Backup created: {{ mtime }} {% if size %}- {{ (size/1024)|round(2) }} KB{% endif %}</p>
+    <div class="alert alert-warning">A pre-undo backup of the current workbook will be created before restoring. No reviews will be deleted; this operation replaces the current file with the selected backup.</div>
+    <form method="post">
+      <button type="submit" class="btn btn-danger">Yes, undo using this latest backup</button>
+      <a href="/admin/backups" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+  </div>
+</main>
+{% endblock %}

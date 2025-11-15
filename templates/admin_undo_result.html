@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Undo Result{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+  {% if not found %}
+    <div class="alert alert-info">No backup files found — nothing to undo.</div>
+    <a href="/admin/backups" class="btn btn-secondary">Back to Backups</a>
+  {% else %}
+    {% if restored %}
+      <div class="alert alert-success">
+        <h4 class="alert-heading">Undo Successful</h4>
+        <p>Restored from <strong>{{ backup_file }}</strong>.</p>
+        {% if pre_backup %}
+          <p>A pre-undo backup was saved as <strong>{{ pre_backup }}</strong>.</p>
+        {% endif %}
+        <a href="/admin/reviews" class="btn btn-primary">Back to Reviews</a>
+      </div>
+    {% else %}
+      <div class="alert alert-danger">
+        <h4 class="alert-heading">Undo Failed</h4>
+        <p>Error: {{ error }}</p>
+        <a href="/admin/backups" class="btn btn-secondary">Back to Backups</a>
+      </div>
+    {% endif %}
+  {% endif %}
+</main>
+{% endblock %}

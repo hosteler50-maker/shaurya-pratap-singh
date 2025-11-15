@@ -16,7 +16,10 @@
           <div>
             <a class="btn btn-sm btn-outline-primary me-2" href="/admin/backups/download/{{ b.name }}">Download</a>
             <a class="btn btn-sm btn-outline-secondary me-2" href="/admin/reviews">Back</a>
-            <a class="btn btn-sm btn-danger" href="/admin/backups/restore/{{ b.name }}" onclick="return confirm('Restore from this backup? A pre-restore backup will be created first.')">Restore</a>
+            <a class="btn btn-sm btn-danger me-2" href="/admin/backups/restore/{{ b.name }}" onclick="return confirm('Restore from this backup? A pre-restore backup will be created first.')">Restore</a>
+            <form method="post" action="/admin/undo_restore" style="display:inline">
+              <button class="btn btn-sm btn-warning" type="submit" title="Undo last restore (uses most recent backup)">Undo Last Restore</button>
+            </form>
           </div>
         </div>
       {% endfor %}

@@ -18,6 +18,9 @@
             <span class="text-muted me-2">Hi, {{ session.get('user_name') }}</span>
             <a class="btn btn-outline-primary" href="/hostels">Hostels</a>
             <a class="btn btn-primary" href="/review"><i class="fa-solid fa-pen-to-square me-1"></i>Add Review</a>
+            {% if session.get('user_email') and session.get('user_email').lower() == ('hosteler50@gmail.com') %}
+              <a class="btn btn-sm btn-warning" href="/admin/reviews">Admin</a>
+            {% endif %}
             <a class="btn btn-outline-danger btn-sm" href="/logout">Logout</a>
           {% else %}
             <a class="btn btn-outline-primary" href="/hostels">Hostels</a>

@@ -15,6 +15,7 @@ Session(app)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 DATA_FILE = os.path.join(DATA_DIR, 'hostels.xlsx')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'hosteler50@gmail.com')
 
 
 def ensure_data_file():
@@ -194,6 +195,11 @@ def load_users():
     return users
 
 
+def is_admin():
+    """Simple admin check: session email matches ADMIN_EMAIL."""
+    return session.get('user_email') and session.get('user_email').lower() == ADMIN_EMAIL.lower()
+
+
 def user_by_email(email):
     users = load_users()
     for u in users:
@@ -261,6 +267,21 @@ def average_ratings_for(hostel_id):
         'location': avg('rating_location'),
         'owner': avg('rating_owner')
     }
+
+
+@app.route('/admin/reviews')
+def admin_reviews():
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    if not is_admin():
+        return "Forbidden", 403
+
+    # load hostels map for name lookup
+    hostels_list = load_hostels()
+    hostels_map = {h['id']: h['name'] for h in hostels_list}
+    reviews = load_reviews()
+    # render template with full mobiles (admin only)
+    return render_template('admin_reviews.html', reviews=reviews, hostels_map=hostels_map)
 
 
 @app.route('/login', methods=['GET', 'POST'])

@@ -120,7 +120,16 @@
                     <div class="small text-muted mb-2" style="border-bottom: 1px solid rgba(63,43,99,0.1); padding-bottom: 8px;">
                       {% if r.reviewer_college %}<span class="me-3"><i class="fa-solid fa-graduation-cap me-1"></i>{{ r.reviewer_college }}</span>{% endif %}
                       {% if r.reviewer_course %}<span class="me-3"><i class="fa-solid fa-book me-1"></i>{{ r.reviewer_course }}</span>{% endif %}
-                      {% if r.reviewer_mobile %}<span class="me-3"><i class="fa-solid fa-phone me-1"></i>{{ r.reviewer_mobile }}</span>{% endif %}
+                      {% if r.reviewer_mobile %}
+                        {# Show full mobile only to the reviewer (logged-in user equals reviewer_id) #}
+                        {% if current_user and current_user == r.reviewer_id %}
+                          <span class="me-3"><i class="fa-solid fa-phone me-1"></i>{{ r.reviewer_mobile }}</span>
+                        {% else %}
+                          {# Mask mobile for public viewers - show only last 4 digits #}
+                          {% set last4 = (r.reviewer_mobile[-4:] if r.reviewer_mobile|length > 4 else r.reviewer_mobile) %}
+                          <span class="me-3 text-muted" title="Visible only to reviewer"><i class="fa-solid fa-phone me-1"></i>******{{ last4 }}</span>
+                        {% endif %}
+                      {% endif %}
                     </div>
 
                     <!-- Hostel Details -->

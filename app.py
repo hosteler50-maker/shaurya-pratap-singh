@@ -200,6 +200,73 @@ def is_admin():
     return session.get('user_email') and session.get('user_email').lower() == ADMIN_EMAIL.lower()
 
 
+def migrate_reviews_in_wb():
+    """Normalize Reviews sheet rows into 17-column format.
+    Returns number of rows migrated.
+    """
+    wb = load_workbook_safe()
+    if 'Reviews' not in wb.sheetnames:
+        return 0
+    rs = wb['Reviews']
+    rows = list(rs.iter_rows(values_only=True))
+    if not rows:
+        return 0
+
+    new_header = ['hostel_id', 'reviewer_id', 'reviewer_name', 'reviewer_mobile', 'reviewer_college', 'reviewer_course', 'reviewer_address', 'rating_overall', 'rating_food', 'rating_cleaning', 'rating_staff', 'rating_location', 'rating_owner', 'fees_per_year', 'room_sharing', 'comment', 'date']
+    new_rows = []
+
+    for row in rows[1:]:
+        if not row or not row[0]:
+            continue
+        row = list(row)
+        # New rows already in full format
+        if len(row) >= 17:
+            nr = row[:17]
+        # Legacy 11-column format: map known indices into new layout
+        elif len(row) >= 11:
+            # legacy: 0 hostel_id,1 reviewer_id,2 reviewer_name,3 overall,4 food,5 cleaning,6 staff,7 location,8 owner,9 comment,10 date
+            nr = [
+                row[0],  # hostel_id
+                row[1],  # reviewer_id
+                row[2] or 'Anonymous',
+                '',     # reviewer_mobile
+                '',     # reviewer_college
+                '',     # reviewer_course
+                '',     # reviewer_address
+                row[3], # rating_overall
+                row[4], # rating_food
+                row[5], # rating_cleaning
+                row[6], # rating_staff
+                row[7], # rating_location
+                row[8], # rating_owner
+                '',     # fees_per_year
+                '',     # room_sharing
+                row[9], # comment
+                row[10] # date
+            ]
+        else:
+            # Skip malformed rows
+            continue
+        new_rows.append(nr)
+
+    # backup existing sheet by renaming
+    try:
+        timestamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        backup_name = f'Reviews_backup_{timestamp}'
+        rs.title = backup_name
+    except Exception:
+        # if renaming fails, ignore and continue
+        pass
+
+    # create new Reviews sheet
+    rs_new = wb.create_sheet('Reviews')
+    rs_new.append(new_header)
+    for nr in new_rows:
+        rs_new.append(nr)
+    wb.save(DATA_FILE)
+    return len(new_rows)
+
+
 def user_by_email(email):
     users = load_users()
     for u in users:
@@ -282,6 +349,17 @@ def admin_reviews():
     reviews = load_reviews()
     # render template with full mobiles (admin only)
     return render_template('admin_reviews.html', reviews=reviews, hostels_map=hostels_map)
+
+
+@app.route('/admin/migrate_reviews')
+def admin_migrate_reviews():
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    if not is_admin():
+        return "Forbidden", 403
+
+    count = migrate_reviews_in_wb()
+    return render_template('admin_migrate_result.html', count=count)
 
 
 @app.route('/login', methods=['GET', 'POST'])

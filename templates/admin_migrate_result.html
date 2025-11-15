@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Migration Result{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+  <div class="alert alert-success">
+    <h4 class="alert-heading">Migration Complete</h4>
+    <p>{{ count }} review rows were migrated/normalized into the 17-column format.</p>
+    <hr>
+    <a href="/admin/reviews" class="btn btn-primary">Back to Reviews</a>
+  </div>
+</main>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, Response, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response, session, send_from_directory, abort
 from flask_session import Session
 import os
 from openpyxl import Workbook, load_workbook
@@ -389,6 +389,46 @@ def admin_backup_workbook():
         return render_template('admin_backup_result.html', backup_file=fname)
     else:
         return render_template('admin_backup_result.html', backup_file=None)
+
+
+@app.route('/admin/backups')
+def admin_backups():
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    if not is_admin():
+        return "Forbidden", 403
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    files = []
+    for name in sorted(os.listdir(DATA_DIR), reverse=True):
+        if not name.lower().startswith('hostels_backup_'):
+            continue
+        path = os.path.join(DATA_DIR, name)
+        try:
+            size = os.path.getsize(path)
+            mtime = datetime.utcfromtimestamp(os.path.getmtime(path)).isoformat() + 'Z'
+        except Exception:
+            size = None
+            mtime = None
+        files.append({'name': name, 'size': size, 'mtime': mtime})
+
+    return render_template('admin_backups.html', backups=files)
+
+
+@app.route('/admin/backups/download/<path:filename>')
+def admin_backups_download(filename):
+    if not session.get('user_id'):
+        return redirect(url_for('login'))
+    if not is_admin():
+        return "Forbidden", 403
+
+    # prevent path traversal by allowing only files from DATA_DIR and matching backup prefix
+    if not filename.startswith('hostels_backup_'):
+        abort(404)
+    safe_path = os.path.join(DATA_DIR, filename)
+    if not os.path.exists(safe_path):
+        abort(404)
+    return send_from_directory(DATA_DIR, filename, as_attachment=True)
 
 
 @app.route('/login', methods=['GET', 'POST'])

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Backups - Admin{% endblock %}
+
+{% block content %}
+<main class="container my-5">
+  <h2 class="mb-4">Workbook Backups</h2>
+  {% if backups %}
+    <div class="list-group">
+      {% for b in backups %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ b.name }}</strong>
+            <div class="small text-muted">Created: {{ b.mtime }} {% if b.size %}- {{ (b.size/1024)|round(2) }} KB{% endif %}</div>
+          </div>
+          <div>
+            <a class="btn btn-sm btn-outline-primary me-2" href="/admin/backups/download/{{ b.name }}">Download</a>
+            <a class="btn btn-sm btn-outline-secondary" href="/admin/reviews">Back</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">No backup files found. Use "Create File Backup" to make one.</div>
+  {% endif %}
+</main>
+{% endblock %}
